@@ -2,6 +2,15 @@
 
 React + Django web app that helps a truck driver pick the safest route based on weather, load weight, and travel time.
 
+## Live demo
+
+- Web app: https://wx-truck-routing.vercel.app
+- API: https://wx-truck-routing-api.vercel.app
+
+`GET /api/health/` returns `{"status":"ok"}`. `POST /api/plan/` plans a trip. The frontend is built with `VITE_API_URL=https://wx-truck-routing-api.vercel.app`, and the API allows the web origin `https://wx-truck-routing.vercel.app` (plus `https://truck-routing-web.vercel.app` when that host is used).
+
+Same deployments also answer on https://truck-routing-web-murex.vercel.app and https://truck-routing-api-xi.vercel.app. The unsuffixed names `truck-routing-web.vercel.app` and `truck-routing-api.vercel.app` are already assigned on another Vercel team, so they are not this app.
+
 ## Features
 
 - Origin, destination, departure date/time, and load weight inputs
@@ -114,10 +123,17 @@ Expect three scored routes, a recommended route, checkpoint ETAs/risks on the ma
 
 ## Deploy (free tiers)
 
+### Backend — Vercel
+
+- Project root: `backend/`
+- `backend/api/index.py` exposes the Django WSGI app; `backend/vercel.json` rewrites every path to that function and allows up to 60s for a plan.
+- `DJANGO_ALLOWED_HOSTS` should include `.vercel.app`.
+- `CORS_ALLOWED_ORIGINS` should include the web origin (`https://wx-truck-routing.vercel.app`).
+
 ### Backend — Render
 
 - `render.yaml` at the repo root defines a free Python web service (`rootDir: backend`, gunicorn).
-- Set **`CORS_ALLOWED_ORIGINS`** to your Vercel frontend origin (e.g. `https://your-app.vercel.app`).
+- Set **`CORS_ALLOWED_ORIGINS`** to your frontend origin (e.g. `https://wx-truck-routing.vercel.app`).
 - Optional: `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS=.onrender.com`.
 
 Manual alternative: create a Render Web Service pointing at `backend/`, build `pip install -r requirements.txt`, start with the `Procfile` / gunicorn command.
@@ -126,7 +142,7 @@ Manual alternative: create a Render Web Service pointing at `backend/`, build `p
 
 - Project root: `frontend/`
 - Build: `npm run build` · Output: `dist`
-- Env: `VITE_API_URL=https://your-render-service.onrender.com`
+- Env: `VITE_API_URL=https://wx-truck-routing-api.vercel.app`
 - `vercel.json` provides SPA rewrites
 
 After both are live, confirm CORS allows the Vercel origin and that a Dallas → Denver plan succeeds.

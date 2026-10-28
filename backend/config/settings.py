@@ -18,11 +18,26 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = [
-    h.strip()
-    for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,.onrender.com,.vercel.app").split(",")
-    if h.strip()
-]
+_DEFAULT_HOSTS = (
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",
+    ".vercel.app",
+    "truck-routing-api.vercel.app",
+    "wx-truck-routing-api.vercel.app",
+    "truck-routing-api-xi.vercel.app",
+)
+
+
+def _csv_env(name: str, default: str) -> list[str]:
+    raw = os.environ.get(name, default)
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+ALLOWED_HOSTS = _csv_env("DJANGO_ALLOWED_HOSTS", ",".join(_DEFAULT_HOSTS))
+for _host in _DEFAULT_HOSTS:
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -97,10 +112,25 @@ REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
 }
 
-# CORS: comma-separated origins via CORS_ALLOWED_ORIGINS env var
-_cors = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
-CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors.split(",") if o.strip()]
+# CORS: comma-separated origins via CORS_ALLOWED_ORIGINS env var.
+# Production web origins stay allowed even if the env var only lists localhost.
+_DEFAULT_CORS_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://truck-routing-web.vercel.app",
+    "https://wx-truck-routing.vercel.app",
+    "https://truck-routing-web-murex.vercel.app",
+)
+CORS_ALLOWED_ORIGINS = _csv_env("CORS_ALLOWED_ORIGINS", ",".join(_DEFAULT_CORS_ORIGINS))
+for _origin in _DEFAULT_CORS_ORIGINS:
+    if _origin not in CORS_ALLOWED_ORIGINS:
+        CORS_ALLOWED_ORIGINS.append(_origin)
 CORS_ALLOW_CREDENTIALS = False
+CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
+
+# Vercel terminates TLS and forwards the public host.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 LOGGING = {
     "version": 1,
